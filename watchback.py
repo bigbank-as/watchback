@@ -46,7 +46,7 @@ Usage Example:
                         help='run validation checks, but do not actually modify anything on the remote API')
     parser.add_argument('--es-ca', metavar='ca', default=None,
                         help='A X509 trusted CA file to use for Elasticsearch HTTPS connections')
-    parser.add_argument('--es-host', metavar='host', required=True, nargs='+',
+    parser.add_argument('--es-host', metavar='host', required=True, action='append',
                         help='Elasticsearch API hostname(s)')
     parser.add_argument('--es-user', metavar='user', help='Username for Elasticsearch authentication', nargs='?',
                         default=None)

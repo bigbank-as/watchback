@@ -4,13 +4,13 @@ Sync Elasticsearch Watchers from local JSON files to remote Elasticsearch.
 
 ## Motivation
 
-[Elasticsearch X-Pack Watchers][] are great. However, they exist in the "belly"
+[Elasticsearch X-Pack Watchers][] are great - however, they exist in the "belly"
 of Elasticsearch. In order to have off-band backups, version history and code
 reviews for Watch definitions, it is desirable to hold them as JSON files in
 VCS.
 
 This project is a simple tool to take a bunch of Watcher definition files
-and sync them to a remote Elasticsearch
+and sync them to a remote Elasticsearch instance.
 
 ## Requirements
 
@@ -70,7 +70,7 @@ Current version of the project is pre-release (`0.x`): anything can change at an
 
 ## License
 
-[Semantic Versioning]: https://semver.org
 [Apache-2.0 license](https://tldrlegal.com/license/apache-license-2.0-(apache-2.0))
 
+[Semantic Versioning]: https://semver.org
 [Elasticsearch X-Pack Watchers]: https://www.elastic.co/guide/en/elastic-stack-overview/current/xpack-alerting.html

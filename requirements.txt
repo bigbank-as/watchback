@@ -1,0 +1,2 @@
+deepdiff==3.3
+elasticsearch==6.2

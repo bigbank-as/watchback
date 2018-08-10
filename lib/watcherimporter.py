@@ -13,9 +13,6 @@ class WatcherImporter:
         self.watcher_dir = watcher_dir
         self.elastic = elastic
 
-    def selftest(self):
-        self.elastic.info()
-
     @staticmethod
     def read_json_file(file_path):
         with open(file_path) as f:

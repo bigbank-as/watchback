@@ -97,16 +97,8 @@ def main():
 
     importer = WatcherImporter(elastic, args.watcher_dir, logger)
 
-    try:
-        importer.selftest()
-    except Exception as e:
-        logger.fatal('Unable to connect to Elasticsearch.')
-        logger.fatal(str(e))
-        sys.exit(1)
-
     importer.run(args.dry_run)
     logger.info('Finished importing Watchers')
-
 
 if __name__ == '__main__':
     main()

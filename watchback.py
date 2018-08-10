@@ -40,7 +40,7 @@ Usage Example:
     --watcher-dir=/home/bruce/vigilante/watchlist
 
 """)
-    parser.add_argument('--watcher-dir', metavar='dirpath', nargs='+', default='watchers',
+    parser.add_argument('--watcher-dir', metavar='dirpath', default='watchers',
                         help='Directory containing watch definitions')
     parser.add_argument('--dry-run', default=False, action='store_true',
                         help='run validation checks, but do not actually modify anything on the remote API')
@@ -99,6 +99,7 @@ def main():
 
     importer.run(args.dry_run)
     logger.info('Finished importing Watchers')
+
 
 if __name__ == '__main__':
     main()

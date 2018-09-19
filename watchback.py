@@ -3,6 +3,7 @@
 import os
 import sys
 import argparse
+import textwrap
 from elasticsearch import Elasticsearch
 from ssl import create_default_context
 from lib.watcherimporter import WatcherImporter
@@ -40,6 +41,8 @@ Usage Example:
     --watcher-dir=/home/bruce/vigilante/watchlist
 
 """)
+
+
     parser.add_argument('--watcher-dir', metavar='dirpath', default='watchers',
                         help='Directory containing watch definitions')
     parser.add_argument('--dry-run', default=False, action='store_true',
@@ -48,9 +51,14 @@ Usage Example:
                         help='A X509 trusted CA file to use for Elasticsearch HTTPS connections')
     parser.add_argument('--es-host', metavar='host', required=True, action='append',
                         help='Elasticsearch API hostname(s)')
-    parser.add_argument('--es-user', metavar='user', help='Username for Elasticsearch authentication', nargs='?',
+    parser.add_argument('--es-user', metavar='user', help='Username for Elasticsearch authentication.', nargs='?',
                         default=None)
-    parser.add_argument('--es-pass', metavar='pass', help='Password for Elasticsearch authentication', nargs='?',
+    parser.add_argument('--es-pass', metavar='pass',
+                        help='''
+                        Password for Elasticsearch authentication.
+                        Use - (hypen) for asking password during script execution.
+                        ''',
+                        nargs='?',
                         default=None)
     parser.add_argument('--es-insecure',
                         help='''
@@ -64,9 +72,15 @@ Usage Example:
     return parser.parse_args()
 
 
+
+
 def main():
     args = _setup_cli_args()
     logger = _logger_factory()
+
+    if args.es_pass == "-":
+        es_pass = input("Enter your Elasticsearch password or leave empty if you don't use password: ")
+        args.es_pass = es_pass
 
     if args.es_insecure:
         logger.critical('I\'m sorry Dave, I\'m afraid I can\'t do that. ' +

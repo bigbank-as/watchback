@@ -44,6 +44,12 @@ class WatcherImporter:
         else:
             self.logger.info('Updated watcher %s, it is now version #%d', watcher_id, result.get('_version', 1))
 
+        try:
+            result = self.elastic.xpack.watcher.activate_watch(id=watcher_id)
+        except RequestError as e:
+            self.logger.exception('Unable to activate Elasticsearch watcher %s: %s', watcher_id, str(e))
+            return
+
     def watcher_needs_updating(self, watcher_id, watcher_definition):
 
         """

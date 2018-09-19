@@ -21,11 +21,12 @@ Python 3 + PIP
 ```bash
 git clone https://github.com/bigbank-as/watchback.git
 cd watchback
-pip3 install requirements.txt
+pip3 install -r requirements.txt
 ./watchback.py --help
 ```
 
 ## Usage
+*For --es_pass argument use - (hypen) if you want to password asked during script execution (prevents password storing in bash/used command history).*
 
 ```
 $ ./watchback.py --es-ca Corporate_Root_CA.crt \

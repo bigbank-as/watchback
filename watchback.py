@@ -1,119 +1,159 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 import os
+import csv
 import sys
-import argparse
+import json
 import textwrap
 from elasticsearch import Elasticsearch
 from ssl import create_default_context
 from lib.watcherimporter import WatcherImporter
 import logging
-from argparse import RawDescriptionHelpFormatter
+from getpass import getpass
 
+config_loc = os.environ["HOME"] + "/.watchback-config"
+log_level = "standard"
+password = ""
+
+def _result_out(res, loc):
+	files = os .listdir(loc)
+	files_nr = len(files)
+
+	print()
+	print("     Watchback Results")
+	print("─" * 27)
+	print(" Total watchers: {:>9}".format(files_nr))
+	print(" Uploaded watchers: {:>6}".format(res))
+	print(" Failed watchers: {:>8}".format(files_nr - res))
+	#print("Total watchers: %7s\n" \
+	#	  "Uploaded watchers: %4s\n" \
+	#	  "Failed watchers: %4s" % (str(files_nr), str(res), str(files_nr - res)))
+	print("─" * 27)
+	print()
 
 def _logger_factory():
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    global log_level
 
+    logger = logging.getLogger()
     handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.INFO)
+
+    if log_level == "debug":
+    	logger.setLevel(logging.INFO)
+    	handler.setLevel(logging.INFO)
+    else:
+    	logger.setLevel(logging.ERROR)
+    	handler.setLevel(logging.ERROR)
+
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
 
     logger.addHandler(handler)
     return logger
 
-
 def _setup_cli_args():
-    parser = argparse.ArgumentParser(formatter_class=RawDescriptionHelpFormatter, description=r"""
-Sync Elasticsearch Watchers from local JSON files to remote Elasticsearch
+	global password, log_level
+	args = {}
 
-This program takes a directory of Elasticsearch Watchers (as JSON files)
-and syncs them to a remote Elasticsearch.
+	while True:
+		try:
+			with open(config_loc) as json_file:
+				args = json.load(json_file)
+				break
+		except:
+			def_data = {"username": "jane.doe", \
+						"watch-dir": "/dir/to/watchers", \
+						"cert": "/dir/to/certificate", \
+						"host": "localhost", \
+						"port": 3000, \
+						"dry_run": False, \
+						"insecure": False}
 
-Usage Example:
+			with open(config_loc, "w") as outfile:
+				json.dump(def_data, outfile)
 
-./watchback.py --es-ca Corporate_Root_CA.crt \
-    --es-user=bruce.wayne \
-    --es-pass=YouNeverSeeMeComing \
-    --es-host=elasticsearch.localhost \
-    --es-port=9200 \
-    --watcher-dir=/home/bruce/vigilante/watchlist
+	username = input("Username (default: %s): " % args["username"])
+	if username != "":
+		args["username"] = username
 
-""")
+	password = getpass(prompt="Password: ")
 
+	out_level = input("Output level standard/debug (default: standard): ")
+	if out_level == "debug":
+		log_level = "debug"
+	else:
+		log_level = "standard"
 
-    parser.add_argument('--watcher-dir', metavar='dirpath', default='watchers',
-                        help='Directory containing watch definitions')
-    parser.add_argument('--dry-run', default=False, action='store_true',
-                        help='run validation checks, but do not actually modify anything on the remote API')
-    parser.add_argument('--es-ca', metavar='ca', default=None,
-                        help='A X509 trusted CA file to use for Elasticsearch HTTPS connections')
-    parser.add_argument('--es-host', metavar='host', required=True, action='append',
-                        help='Elasticsearch API hostname(s)')
-    parser.add_argument('--es-user', metavar='user', help='Username for Elasticsearch authentication.', nargs='?',
-                        default=None)
-    parser.add_argument('--es-pass', metavar='pass',
-                        help='''
-                        Password for Elasticsearch authentication.
-                        Use - (hypen) for asking password during script execution.
-                        ''',
-                        nargs='?',
-                        default=None)
-    parser.add_argument('--es-insecure',
-                        help='''
-                        Use unencrypted HTTP to connect to Elasticsearch.
-                        HTTPS is used when this argument is not specified.
-                        ''',
-                        action='store_true',
-                        default=False)
-    parser.add_argument('--es-port', metavar='port', type=int, help='Port of Elasticsearch API', nargs='?',
-                        default=9200)
-    return parser.parse_args()
+	watch_dir = input("Watcher directory (default: %s): " % args["watch-dir"])
+	if watch_dir != "":
+		args["watch-dir"] = watch_dir
 
+	cert = input("Certificate (default: %s): " % args["cert"])
+	if cert != "":
+		args["cert"] = cert 
 
+	host = input("Host (default: %s): " % args["host"])
+	if host != "":
+		args["host"] = host
+	
+	port = input("Port (default: %s): " % args["port"])
+	if port != "":
+		args["port"] = port
 
+	dry_run = input("Dry-run (default: %s): " % args["dry_run"])
+	if dry_run == "True":
+		args["dry_run"] = True
+	else:
+		args["dry_run"] = False
+					
+	insecure = input("Insecure (default: %s): " % args["insecure"])
+	if insecure == "True":
+		args["insecure"] = True
+	else:
+		args["insecure"] = False
+			
+	with open(config_loc, "w") as outfile:
+		json.dump(args, outfile)
+
+	return args
 
 def main():
+    global password
     args = _setup_cli_args()
     logger = _logger_factory()
 
-    if args.es_pass == "-":
-        es_pass = input("Enter your Elasticsearch password or leave empty if you don't use password: ")
-        args.es_pass = es_pass
-
-    if args.es_insecure:
+    if args["insecure"]:
         logger.critical('I\'m sorry Dave, I\'m afraid I can\'t do that. ' +
                         'I just prevented you from shooting your own foot with a ' +
                         '2-barrel shotgun, loaded with glass shrapnel from broken whiskey bottles.')
-        logger.critical('Instead of disabling TLS certificate verification (--es-insecure), look up the correct ' +
-                        'CA to use and specify it using --es-ca.')
+        logger.critical('Instead of disabling TLS certificate verification, look up the correct ' +
+                        'CA to use and specify it.')
         sys.exit(1)
 
-    watcher_dir = os.path.abspath(args.watcher_dir)
-    auth = (args.es_user, args.es_pass) if args.es_user and args.es_pass else None
+    auth = (args["username"], password) if args["username"] and password else None
     try:
-        ssl_context = create_default_context(cafile=args.es_ca)
+        ssl_context = create_default_context(cafile=args["cert"])
     except FileNotFoundError:
-        logger.fatal('Unable to find the CA file %s', args.es_ca)
+        logger.fatal('Unable to find the CA file %s', args["cert"])
         sys.exit(1)
 
     elastic = Elasticsearch(
-        args.es_host,
+        args["host"],
         http_auth=auth,
-        scheme='http' if args.es_insecure else 'https',
-        port=args.es_port,
+        scheme='http' if args["insecure"] else 'https',
+        port=args["port"],
         ssl_context=ssl_context,
     )
 
-    logger.info('Starting to sync Watchers from local folder %s to remote Elasticsearch %s:%d', watcher_dir,
-                args.es_host, args.es_port)
+    logger.info('Starting to sync Watchers from local folder %s to remote Elasticsearch %s:%d', args["watch-dir"],
+                args["host"], args["port"])
 
-    importer = WatcherImporter(elastic, args.watcher_dir, logger)
+    importer = WatcherImporter(elastic, args["watch-dir"], logger)
 
-    importer.run(args.dry_run)
+    count = 0
+    res = importer.run(count, args["dry_run"])
+    _result_out(res, args["watch-dir"])
+
     logger.info('Finished importing Watchers')
-
 
 if __name__ == '__main__':
     main()

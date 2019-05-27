@@ -82,7 +82,7 @@ class WatcherImporter:
 
         return True
 
-    def run(self, dry_run=False):
+    def run(self, count, dry_run=False):
 
         for watcher_id in os.listdir(self.watcher_dir):
             watcher_path = os.path.join(self.watcher_dir, watcher_id, self.WATCH_FILE_NAME)
@@ -97,3 +97,6 @@ class WatcherImporter:
                 self.logger.info('Skipping Elasticsearch update (dry_run=True) for watcher %s', watcher_id)
             else:
                 self.update_elastic(watcher_id, watcher_definition)
+                count += 1
+
+        return count

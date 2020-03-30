@@ -23,8 +23,8 @@ def _result_out(res, loc):
 	print("     Watchback Results")
 	print("─" * 27)
 	print(" Total watchers: {:>9}".format(files_nr))
-	print(" Uploaded watchers: {:>6}".format(res))
-	print(" Failed watchers: {:>8}".format(files_nr - res))
+	print(" Updated watchers: {:>7}".format(res))
+	print(" Up-to-date watchers: {:>4}".format(files_nr - res))
 	#print("Total watchers: %7s\n" \
 	#	  "Uploaded watchers: %4s\n" \
 	#	  "Failed watchers: %4s" % (str(files_nr), str(res), str(files_nr - res)))
@@ -144,7 +144,9 @@ def main():
         ssl_context=ssl_context,
     )
 
-    logger.info('Starting to sync Watchers from local folder %s to remote Elasticsearch %s:%d', args["watch-dir"],
+    print("───────────────────────────\nSyncing...")
+
+    logger.info('Starting to sync Watchers from local folder %s to remote Elasticsearch %s:%s', args["watch-dir"],
                 args["host"], args["port"])
 
     importer = WatcherImporter(elastic, args["watch-dir"], logger)
